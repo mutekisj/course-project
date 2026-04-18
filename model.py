@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 import nltk
+import os
 
 from nltk.corpus import stopwords
 from sklearn.model_selection import train_test_split
@@ -13,8 +14,13 @@ from sklearn.svm import LinearSVC
 
 from sklearn.metrics import accuracy_score
 
-nltk.download('stopwords')
-stop_words = set(stopwords.words('russian'))
+
+try:
+    stop_words = set(stopwords.words('russian'))
+except:
+    nltk.download('stopwords')
+    stop_words = set(stopwords.words('russian'))
+
 
 def preprocess(text):
     text = str(text).lower()
@@ -23,11 +29,20 @@ def preprocess(text):
     words = [w for w in words if w not in stop_words]
     return " ".join(words)
 
-def train_model():
-    df = pd.read_csv("data/dataset.csv", encoding="utf-8")
+
+def load_data():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_PATH = os.path.join(BASE_DIR, "data", "dataset.csv")
+    
+    df = pd.read_csv(DATA_PATH, encoding="utf-8")
     df = df.dropna()
 
     df["text"] = df["text"].apply(preprocess)
+    return df
+
+
+def train_model():
+    df = load_data()
 
     X_train, X_test, y_train, y_test = train_test_split(
         df["text"], df["label"],
@@ -64,6 +79,7 @@ def train_model():
             best_name = name
 
     return best_model, best_name, results
+
 
 def predict(model, text):
     text = preprocess(text)
